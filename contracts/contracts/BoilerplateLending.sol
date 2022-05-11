@@ -4,14 +4,14 @@ import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //standard aave-esque lending
 contract BoilerplateLending {
-    mapping (address => uint) collateralToToken;
+    mapping (address => uint) collateralToPercentage;
     //some sort of storage for what is valid collateral
 
     function loan(uint _borrowAmount, address _collateralToken, address  _assetBorrowed) external {
         //require for healthfactor stuff eg require(_collateralAmount > _borrowAmount * 1.5, "not enough collateral");
         //require token to be applicable so we dont get useless shitcoins
-        require _collateralToken 
-        uint collateralRatio = collateralToToken[_collateralToken] * 100; // x100 for percentage
+        require(collateralToPercentage[_collateralToken] != 0);
+        uint collateralRatio = collateralToPercentage[_collateralToken] * 100; // x100 for percentage
         IERC20(_collateralToken).approve(address(this), collateralRatio);
         IERC20(_collateralToken).transferFrom(msg.sender, address(this), collateralRatio);
 
