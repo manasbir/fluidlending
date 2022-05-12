@@ -24,7 +24,7 @@ contract BoilerplateLending {
         for (uint i; i < loans.length; i++){
             //check if loan is liquidatable then emit even or something idk
             CurrentLoans[] memory loan;
-            if (loan[i]._borrowedAmount > loan[i]._collateralAmount * /* healthfactor we somehow determine GET THE ORACLE STUFF IMPLEMENTED */) {
+            if (loan[i]._borrowedAmount > loan[i]._collateralAmount * 1 /* healthfactor we somehow determine GET THE ORACLE STUFF IMPLEMENTED */) {
                 return (isLiquidatable, owner); //now loan is liquidatable
             }
         }
