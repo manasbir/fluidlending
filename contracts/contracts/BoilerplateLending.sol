@@ -31,7 +31,6 @@ contract BoilerplateLending {
     }
 
     function borrow(address _asset, uint _amount, address _borrowedAsset, uint _amountBorrowed) external {
-        //require for healthfactor stuff eg require(_collateralAmount > _borrowAmount * 1.5, "not enough collateral");
         //require token to be applicable so we dont get useless shitcoins
         require(collateralToPercentage[_asset] != 0 && borrowedAssetToPercentage[_borrowedAsset] != 0);
         //uint collateralRatio = collateralToPercentage[_collateralToken] * 100; // x100 for percentage
@@ -50,12 +49,11 @@ contract BoilerplateLending {
 
 
         IERC20(_asset).transfer(msg.sender, _amountBorrowed);
-        //interest adding function or whatever
-        //we need some way to liquidate or some way to set a loan to liquidatable
-        //do we need to store all of our current loans in a struct/mapping??
+        //interest adding function or whatever needs to be implemented
+
         //https://github.com/aave/protocol-v2/blob/master/contracts/protocol/lendingpool/LendingPool.sol
         //use ctrl + F _executeBorrow
-        loans.push(CurrentLoans(_amount, _amountBorrowed, _asset, _borrowedAsset, msg.sender));
+        loans.push(CurrentLoans(_amount, _amountBorrowed, _asset, _borrowedAsset, msg.sender)); //adds to db of current loans
         checkLiquidation(); //no gas so worth adding after every function!
 
     }
