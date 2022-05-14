@@ -17,14 +17,16 @@ contract BoilerplateLending {
     AggregatorV3Interface USDCprice;
     AggregatorV3Interface LINKprice;
 
-
+    struct TokenPrice{ address oracleAddress; uint price; }
+    TokenPrice[] tokenPrices;
 
     mapping (address => uint) collateralToPercentage;
     //uint example would be 1 for 100% ideally idk figure it out later
     mapping (address => uint) borrowedAssetToPercentage;
     //some sort of storage for what is valid collateral
-    mapping (address => uint) public tokenToPrice;
+    mapping (AggregatorV3Interface => tokenPrices) public tokenToPrice;
     
+    address[] public collateral;
 
     struct CurrentLoans {
         uint _collateralAmount;
@@ -41,10 +43,12 @@ contract BoilerplateLending {
         DAIprice = AggregatorV3Interface(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a);
         USDCprice = AggregatorV3Interface(0x396c5E36DD0a0F5a5D33dae44368D4193f69a1F0);
         LINKprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
-        tokenToPrice[0xFab46E002BbF0b4509813474841E0716E6730136]; //this is a bullshit token i got from a faucet lmao
+        tokenPrices[0xFab46E002BbF0b4509813474841E0716E6730136] = 1;
+        tokenToPrice[AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331)] = tokenPrices[0]; //this is a bullshit token i got from a faucet lmao
     }
 
     function checkPrices() public view returns(uint) {
+        //we want iterable data type for our addresses
         (,int price,,,) = DAIprice.latestRoundData();
         uint8 decimals = DAIprice.decimals();
         uint daiPrice =  uint(price) / decimals;
@@ -55,8 +59,7 @@ contract BoilerplateLending {
     function checkLiquidation() public view returns(bool isLiquidatable, address owner){
         for (uint i; i < loans.length; i++){
             //check if loan is liquidatable then emit even or something idk
-            CurrentLoans[] memory loan;
-            if (loan[i]._borrowedAmount > loan[i]._collateralAmount * 1 /* healthfactor we somehow determine GET THE ORACLE STUFF IMPLEMENTED */) {
+            if (loans[i]._borrowedAmount > loans[i]._collateralAmount * 1 /* healthfactor we somehow determine GET THE ORACLE STUFF IMPLEMENTED */) {
                 return (isLiquidatable, owner); //now loan is liquidatable
             }
         }
