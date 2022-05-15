@@ -24,11 +24,11 @@ contract BoilerplateLending {
 
     mapping (IERC20 => AggregatorV3Interface) tokenPrice;
 
+    mapping (IERC20 => uint) prices;
+
     IERC20[] public collateral;
     IERC20[] public borrowableTokens;
     IERC20[] public allValidTokens;
-
-    uint[] public prices;
 
     struct CurrentLoans {
         uint _collateralAmount;
@@ -50,16 +50,15 @@ contract BoilerplateLending {
         tokenToPrice[0xFab46E002BbF0b4509813474841E0716E6730136] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0); //this is a bullshit token i got from a faucet lmao
     }
 
-    function checkPrices(IERC20 token) public view returns(uint[] memory) {
+    function checkPrices() public view returns(uint) {
         uint lengthOfValidTokens = allValidTokens.length;
         for (uint i; i < lengthOfValidTokens; i++) {
             AggregatorV3Interface priceOracle = tokenPrice[allValidTokens[i]];
             (,int price,,,) = priceOracle.latestRoundData();
             uint8 decimals = priceOracle.decimals();
             uint priceOfToken =  uint(price) / decimals;
-            
         }
-        return priceOfToken;
+        
 
 
 
