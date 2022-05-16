@@ -20,9 +20,9 @@ contract BoilerplateLending {
     //uint example would be 1 for 100% ideally idk figure it out later
     mapping (address => uint) borrowedAssetToPercentage;
     //some sort of storage for what is valid collateral
-    mapping (address => TokenPrice) public tokenToPrice;
+    mapping (address => TokenPrice) public tokenToStruct;
 
-    mapping (IERC20 => AggregatorV3Interface) tokenPrice;
+    mapping (IERC20 => AggregatorV3Interface) tokenToOracle;
 
     mapping (IERC20 => uint) prices;
 
@@ -47,28 +47,18 @@ contract BoilerplateLending {
         DAIprice = AggregatorV3Interface(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a);
         USDCprice = AggregatorV3Interface(0x396c5E36DD0a0F5a5D33dae44368D4193f69a1F0);
         LINKprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
-        tokenToPrice[0xFab46E002BbF0b4509813474841E0716E6730136] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0); //this is a bullshit token i got from a faucet lmao
+        tokenToStruct[0xFab46E002BbF0b4509813474841E0716E6730136] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0); //this is a bullshit token i got from a faucet lmao
     }
 
-    function checkPrices() public view returns(uint) {
+    function checkPrices() public returns(uint) {
         uint lengthOfValidTokens = allValidTokens.length;
         for (uint i; i < lengthOfValidTokens; i++) {
-            AggregatorV3Interface priceOracle = tokenPrice[allValidTokens[i]];
+            AggregatorV3Interface priceOracle = tokenToOracle[allValidTokens[i]];
             (,int price,,,) = priceOracle.latestRoundData();
             uint8 decimals = priceOracle.decimals();
             uint priceOfToken =  uint(price) / decimals;
+            prices[allValidTokens[i]] = priceOfToken;
         }
-        
-
-
-
-
-       /*  //we want iterable data type for our addresses
-        AggregatorV3Interface priceOracle = tokenPrice[token];
-        (,int price,,,) = priceOracle.latestRoundData();
-        uint8 decimals = priceOracle.decimals();
-        uint priceOfToken =  uint(price) / decimals;
-        return(priceOfToken); */
     }
 
 
