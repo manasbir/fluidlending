@@ -18,7 +18,7 @@ contract BoilerplateLending {
 
 
 
-    mapping (IERC20 => uint) collateralToPercentage;
+    mapping (IERC20 => uint) collateralToPercentage;//doesnt need to exist
     //uint example would be 1 for 100% ideally idk figure it out later
     mapping (IERC20 => uint) borrowedAssetToPercentage;
     //some sort of storage for what is valid collateral
