@@ -37,8 +37,8 @@ contract BoilerplateLending {
     struct CurrentLoans {
         uint _collateralAmount;
         uint _borrowedAmount;
-        IERC20 _collateral;
-        IERC20 _borrowed;
+        IERC20 _collateral; //i want this to be an array but dont really know how
+        IERC20 _borrowed; // i want this to be an array also
         address _owner;
     }
 
@@ -69,6 +69,8 @@ contract BoilerplateLending {
             uint priceOfToken =  uint(price) / decimals;
             prices[allValidTokens[i]] = priceOfToken;
         }
+
+        checkLiquidation();
     }
 
     function checkSpecificPrice(IERC20 token) public view returns(uint) {
@@ -101,6 +103,9 @@ contract BoilerplateLending {
         require(_asset != _borrowedAsset, "you can't borrow the same token, silly goose");
         //require token to be applicable so we dont get useless shitcoins
         require(prices[_asset] != 0 && prices[_borrowedAsset] != 0, 'not valid tokens');
+        
+        require(_asset.balanceOf(address(msg.sender)) >= _amount);
+        require(_borrowedAsset.balanceOf(address(this)) >= _amountBorrowed);
 
         uint priceOfAsset = checkSpecificPrice(_asset);
         uint priceOfBorrowedAsset = checkSpecificPrice(_borrowedAsset);
@@ -140,17 +145,28 @@ contract BoilerplateLending {
         counterOfLoans++;
     }
 
-    function fund(IERC20 _asset, uint amount) external {
+    function fund(IERC20 _asset, uint _amount) external {
         refreshPrices();
 
         require(prices[_asset] != 0);
 
-        uint priceOfAsset = checkSpecificPrice(_asset);
+        uint priceOfAsset = checkSpecificPrice(_asset); //might not be relevant
 
         uint indexForLoan = ownerToLoanNumber[msg.sender];
 
         require(loans[indexForLoan]._collateral == _asset);
-        require(condition);
+        require(_asset.balanceOf(msg.sender) >= _amount);
+
+        _asset.approve(address(this), _amount);
+        _asset.transferFrom(msg.sender, address(this), _amount);
+
+        loans[indexForLoan]._collateralAmount += _amount;
+
+
+    }
+
+    function takeOutCollateral() external {
+        refreshPrices();
 
 
     }
