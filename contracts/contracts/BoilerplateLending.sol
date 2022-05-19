@@ -16,15 +16,19 @@ contract BoilerplateLending {
     struct TokenPrice{ address AggregatorV3Interface; uint price; }
     TokenPrice[] tokenPrices;
 
-    mapping (address => uint) collateralToPercentage;
+
+
+    mapping (IERC20 => uint) collateralToPercentage;
     //uint example would be 1 for 100% ideally idk figure it out later
-    mapping (address => uint) borrowedAssetToPercentage;
+    mapping (IERC20 => uint) borrowedAssetToPercentage;
     //some sort of storage for what is valid collateral
     mapping (address => TokenPrice) public tokenToStruct;
 
     mapping (IERC20 => AggregatorV3Interface) tokenToOracle;
 
     mapping (IERC20 => uint) prices;
+
+    
 
     IERC20[] public collateral;
     IERC20[] public borrowableTokens;
@@ -33,12 +37,18 @@ contract BoilerplateLending {
     struct CurrentLoans {
         uint _collateralAmount;
         uint _borrowedAmount;
-        address _collateral;
-        address _borrowed;
+        IERC20 _collateral;
+        IERC20 _borrowed;
         address _owner;
     }
 
+    uint[] public loansAmount;
+
+    mapping (address => uint) ownerToLoanNumber; //this doesn't allow users to take out multiple loans which is bad unless we make the struct use arrays and stuff
+
     CurrentLoans[] public loans;
+
+    uint counterOfLoans = 0;
 
     constructor () {
         address owner = msg.sender;
@@ -50,7 +60,7 @@ contract BoilerplateLending {
         tokenToStruct[0xFab46E002BbF0b4509813474841E0716E6730136] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0); //this is a bullshit token i got from a faucet lmao
     }
 
-    function checkPrices() public returns(uint) {
+    function refreshPrices() public {
         uint lengthOfValidTokens = allValidTokens.length;
         for (uint i; i < lengthOfValidTokens; i++) {
             AggregatorV3Interface priceOracle = tokenToOracle[allValidTokens[i]];
@@ -61,28 +71,50 @@ contract BoilerplateLending {
         }
     }
 
+    function checkSpecificPrice(IERC20 token) public view returns(uint) {
+        AggregatorV3Interface priceOracle = tokenToOracle[token];
+        (,int price,,,) = priceOracle.latestRoundData();
+        uint8 decimals = priceOracle.decimals();
+        uint priceOfToken =  uint(price) / decimals;
+        return priceOfToken;
+    }
 
-    function checkLiquidation() public view returns(bool isLiquidatable, address owner){
+
+    function checkLiquidation() public view returns(bool isLiquidatable, address owner, uint loanNumber){
         for (uint i; i < loans.length; i++){
             //check if loan is liquidatable then emit even or something idk
-            if (loans[i]._borrowedAmount > loans[i]._collateralAmount * 1 /* healthfactor we somehow determine GET THE ORACLE STUFF IMPLEMENTED */) {
-                return (isLiquidatable, owner); //now loan is liquidatable
+            if (loans[i]._borrowedAmount * prices[loans[i]._borrowed] > loans[i]._collateralAmount * collateralToPercentage[loans[i]._collateral]) {
+                isLiquidatable = true;
+
+                return (isLiquidatable, owner, i); //now loan is liquidatable
             }
         }
     }
 
-    function borrow(address _asset, uint _amount, address _borrowedAsset, uint _amountBorrowed) external {
+    function liquidate(uint loanNumber, uint _amount, IERC20 token) external returns(bool) {
+
+    }
+
+    function borrow(IERC20 _asset, uint _amount, IERC20 _borrowedAsset, uint _amountBorrowed) external {
+        refreshPrices();
+
+        require(_asset != _borrowedAsset, "you can't borrow the same token, silly goose");
         //require token to be applicable so we dont get useless shitcoins
-        require(collateralToPercentage[_asset] != 0 && borrowedAssetToPercentage[_borrowedAsset] != 0, 'not valid tokens');
-        //require(condition);
+        require(prices[_asset] != 0 && prices[_borrowedAsset] != 0, 'not valid tokens');
+
+        uint priceOfAsset = checkSpecificPrice(_asset);
+        uint priceOfBorrowedAsset = checkSpecificPrice(_borrowedAsset);
+
+        uint worthOfCollateral = priceOfAsset * _amount;
+        uint worthOfBorrowed = priceOfBorrowedAsset * _amountBorrowed;
         //uint collateralRatio = collateralToPercentage[_collateralToken] * 100; // x100 for percentage
 
-        //averages the two collateral ratios seems kinda dumb imo, but idk wht to do
-        uint borrowRatio = (collateralToPercentage[_asset] + borrowedAssetToPercentage[_borrowedAsset]) / 2;
+        //might not be necessary
+        uint borrowRatio = (borrowedAssetToPercentage[_borrowedAsset]);
 
 
         //checking if the loan is even possible
-        require(_amountBorrowed >= _amount * borrowRatio);
+        require(worthOfBorrowed >= worthOfCollateral * borrowRatio);
         require(IERC20(_asset).balanceOf(address(this)) >= _amount);
 
         IERC20(_asset).approve(address(this), _amount);
@@ -96,10 +128,30 @@ contract BoilerplateLending {
         //https://github.com/aave/protocol-v2/blob/master/contracts/protocol/lendingpool/LendingPool.sol
         //use ctrl + F _executeBorrow
         loans.push(CurrentLoans(_amount, _amountBorrowed, _asset, _borrowedAsset, msg.sender)); //adds to db of current loans
-        (bool liquidationStatus, address owner) = checkLiquidation(); //no gas so worth adding after every function!
+        ownerToLoanNumber[msg.sender] = counterOfLoans;
+        
+        (bool liquidationStatus,, uint loanNumber) = checkLiquidation(); //no gas so worth adding after every function!
 
+        if (liquidationStatus == true) {
+            //liquidate the loan or emit an event to liquidate
+        }
+
+
+        counterOfLoans++;
     }
 
+    function fund(IERC20 _asset, uint amount) external {
+        refreshPrices();
+
+        require(prices[_asset] != 0);
+
+        uint priceOfAsset = checkSpecificPrice(_asset);
+
+        uint indexForLoan = ownerToLoanNumber[msg.sender];
+
+        require(loans[indexForLoan]._collateral == _asset);
+        require(condition);
 
 
+    }
 }
