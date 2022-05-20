@@ -3,6 +3,7 @@
   "dependencies": {
     "@chainlink/contracts": "^0.4.1",
     "@openzeppelin/contracts": "^4.6.0",
+    "@superfluid-finance/ethereum-contracts": "^1.2.2",
     "usingtellor": "^4.0.5"
   }
 }
