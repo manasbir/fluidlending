@@ -4,11 +4,10 @@ import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import { ISuperfluid } from "../node_modules/@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import { IConstantFlowAgreementV1 } from "../node_modules/@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
-import { IInstantDistributionAgreementV1 } from "../node_modules/@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IInstantDistributionAgreementV1.sol";
+//import { IInstantDistributionAgreementV1 } from "../node_modules/@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IInstantDistributionAgreementV1.sol";
 
-
-//standard aave-esque lending
-contract BoilerplateLending {
+//only using CFA
+contract SuperfluidLending {
 
     AggregatorV3Interface public priceFeed;
     AggregatorV3Interface ETHprice;
@@ -21,27 +20,27 @@ contract BoilerplateLending {
 
 
 
-    mapping (IERC20 => uint) collateralToPercentage;//doesnt need to exist
+    mapping (ISuperfluid => uint) collateralToPercentage;//doesnt need to exist
     //uint example would be 1 for 100% ideally idk figure it out later
-    mapping (IERC20 => uint) borrowedAssetToPercentage;
+    mapping (ISuperfluid => uint) borrowedAssetToPercentage;
     //some sort of storage for what is valid collateral
     mapping (address => TokenPrice) public tokenToStruct;
 
-    mapping (IERC20 => AggregatorV3Interface) tokenToOracle;
+    mapping (ISuperfluid => AggregatorV3Interface) tokenToOracle;
 
-    mapping (IERC20 => uint) prices;
+    mapping (ISuperfluid => uint) prices;
 
     
 
-    IERC20[] public collateral;
-    IERC20[] public borrowableTokens;
-    IERC20[] public allValidTokens;
+    ISuperfluid[] public collateral;
+    ISuperfluid[] public borrowableTokens;
+    ISuperfluid[] public allValidTokens;
 
     struct CurrentLoans {
         uint _collateralAmount;
         uint _borrowedAmount;
-        IERC20 _collateral; //i want this to be an array but dont really know how
-        IERC20 _borrowed; // i want this to be an array also
+        ISuperfluid _collateral; //i want this to be an array but dont really know how
+        ISuperfluid _borrowed; // i want this to be an array also
         address _owner;
     }
 
@@ -55,6 +54,12 @@ contract BoilerplateLending {
 
     constructor () {
         address owner = msg.sender;
+
+        ISuperfluid ETHx;
+        ISuperfluid DAIx;
+        ISuperfluid USDCx;
+        ISuperfluid MATICx;
+
         //all the kovan addresses
         ETHprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
         DAIprice = AggregatorV3Interface(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a);
@@ -100,7 +105,7 @@ contract BoilerplateLending {
 
     }
 
-    function borrow(IERC20 _asset, uint _amount, IERC20 _borrowedAsset, uint _amountBorrowed) external {
+    function borrow(ISuperfluid _asset, uint _amount, ISuperfluid _borrowedAsset, uint _amountBorrowed) external {
         refreshPrices();
 
         require(_asset != _borrowedAsset, "you can't borrow the same token, silly goose");
@@ -123,14 +128,14 @@ contract BoilerplateLending {
 
         //checking if the loan is even possible
         require(worthOfBorrowed >= worthOfCollateral * borrowRatio);
-        require(IERC20(_asset).balanceOf(address(this)) >= _amount);
+        require(_asset.balanceOf(address(this)) >= _amount);
 
-        IERC20(_asset).approve(address(this), _amount);
-        IERC20(_asset).transferFrom(msg.sender, address(this), _amount);
+/*         _asset.approve(address(this), _amount);
+        _asset.transferFrom(msg.sender, address(this), _amount);
 
 
 
-        IERC20(_asset).transfer(msg.sender, _amountBorrowed);
+        _asset.transfer(msg.sender, _amountBorrowed); */
         //interest adding function or whatever needs to be implemented
 
         //https://github.com/aave/protocol-v2/blob/master/contracts/protocol/lendingpool/LendingPool.sol
@@ -148,7 +153,7 @@ contract BoilerplateLending {
         counterOfLoans++;
     }
 
-    function fund(IERC20 _asset, uint _amount) external {
+    function fund(ISuperfluid _asset, uint _amount) external {
         refreshPrices();
 
         require(prices[_asset] != 0);
