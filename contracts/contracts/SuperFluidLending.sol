@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import { ISuperfluid } from "./@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import { IConstantFlowAgreementV1 } from "./@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
+import "../@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import { ISuperfluid } from "../@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { IConstantFlowAgreementV1 } from "../@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 //import { IInstantDistributionAgreementV1 } from "../node_modules/@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IInstantDistributionAgreementV1.sol";
 
 //only using CFA
@@ -12,7 +12,7 @@ contract SuperfluidLending {
     AggregatorV3Interface ETHprice;
     AggregatorV3Interface DAIprice;
     AggregatorV3Interface USDCprice;
-    AggregatorV3Interface price;
+    AggregatorV3Interface Xprice;
 
     struct TokenPrice{ address AggregatorV3Interface; uint price; }
     TokenPrice[] tokenPrices;
@@ -63,7 +63,7 @@ contract SuperfluidLending {
         ETHprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
         DAIprice = AggregatorV3Interface(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a);
         USDCprice = AggregatorV3Interface(0x396c5E36DD0a0F5a5D33dae44368D4193f69a1F0);
-        LINKprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
+        Xprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
         tokenToStruct[0xFab46E002BbF0b4509813474841E0716E6730136] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0); //this is a bullshit token i got from a faucet lmao
     }
 
@@ -80,11 +80,11 @@ contract SuperfluidLending {
         checkLiquidation();
     }
 
-    function checkSpecificPrice(IERC20 token) public view returns(uint) {
+    function checkSpecificPrice(ISuperfluid token) public view returns(uint) {
         AggregatorV3Interface priceOracle = tokenToOracle[token];
-        (,int price,,,) = priceOracle.latestRoundData();
+        (,int priceAGAIN,,,) = priceOracle.latestRoundData();
         uint8 decimals = priceOracle.decimals();
-        uint priceOfToken =  uint(price) / decimals;
+        uint priceOfToken =  uint(priceAGAIN) / decimals;
         return priceOfToken;
     }
 
@@ -100,7 +100,7 @@ contract SuperfluidLending {
         }
     }
 
-    function liquidate(uint loanNumber, uint _amount, IERC20 token) external returns(bool) {
+    function liquidate(uint loanNumber, uint _amount, ISuperfluid token) external returns(bool) {
 
     }
 

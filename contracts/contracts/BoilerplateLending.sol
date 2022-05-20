@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "../@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 
 //standard aave-esque lending
@@ -139,6 +139,7 @@ contract BoilerplateLending {
 
         if (liquidationStatus == true) {
             //liquidate the loan or emit an event to liquidate
+            //liquidate(x, x, x);
         }
 
 
