@@ -1,14 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import { ISuperfluid } from "../node_modules/@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import { IConstantFlowAgreementV1 } from "../node_modules/@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
+import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import { ISuperfluid } from "./@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { IConstantFlowAgreementV1 } from "./@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 //import { IInstantDistributionAgreementV1 } from "../node_modules/@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IInstantDistributionAgreementV1.sol";
 
 //only using CFA
 contract SuperfluidLending {
-
     AggregatorV3Interface public priceFeed;
     AggregatorV3Interface ETHprice;
     AggregatorV3Interface DAIprice;
