@@ -11,7 +11,7 @@ contract BoilerplateLending {
     AggregatorV3Interface ETHprice;
     AggregatorV3Interface DAIprice;
     AggregatorV3Interface USDCprice;
-    AggregatorV3Interface LINKprice;
+    AggregatorV3Interface TUSDprice;
 
     struct TokenPrice{ address AggregatorV3Interface; uint price; }
     TokenPrice[] tokenPrices;
@@ -20,7 +20,7 @@ contract BoilerplateLending {
 
     mapping (IERC20 => uint) collateralToPercentage;//doesnt need to exist
     //uint example would be 1 for 100% ideally idk figure it out later
-    mapping (IERC20 => uint) borrowedAssetToPercentage;
+    mapping (IERC20 => uint) borrowedAssetToPercentage; //only exists to know valid token lmfao
     //some sort of storage for what is valid collateral
     mapping (address => TokenPrice) public tokenToStruct;
 
@@ -55,9 +55,13 @@ contract BoilerplateLending {
         //all the kovan addresses
         ETHprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
         DAIprice = AggregatorV3Interface(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a);
-        USDCprice = AggregatorV3Interface(0x396c5E36DD0a0F5a5D33dae44368D4193f69a1F0);
-        LINKprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
-        tokenToStruct[0xFab46E002BbF0b4509813474841E0716E6730136] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0); //this is a bullshit token i got from a faucet lmao
+        USDCprice = AggregatorV3Interface(0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60);
+        TUSDprice = AggregatorV3Interface(0x2ca5A90D34cA333661083F89D831f757A9A50148); //USDT oracle address for Koven testnet - didn't have TUSD/USD pair
+
+        tokenToStruct[0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1] = TokenPrice(0x9326BFA02ADD2366b30bacB125260Af641031331, 0); //this is a bullshit token i got from a faucet lmao
+        tokenToStruct[0xe3CB950Cb164a31C66e32c320A800D477019DCFF] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0);
+        tokenToStruct[0x25B5cD2E6ebAedAa5E21d0ECF25A567EE9704aA7] = TokenPrice(0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60, 0);
+        tokenToStruct[0xB20200908d60f1d7bc68594f677bC15070a87504] = TokenPrice(0x2ca5A90D34cA333661083F89D831f757A9A50148, 0);
     }
 
     function refreshPrices() public {
