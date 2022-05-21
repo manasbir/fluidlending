@@ -189,7 +189,12 @@ contract SuperfluidLending{
         //uint collateralRatio = collateralToPercentage[_collateralToken] * 100; // x100 for percentage
 
         //cfaV1.updateFlowOperatorPermissions(_borrowedAsset, msgSender, 6, _amountBorrowed);
-        cfaV1.createFlowWithCtx(0, msgSender, _asset, int96(int(flowRate)));
+
+        //IERC20(_asset).approve(address(this), _amount);
+        //ISuperfluidToken(_asset).transferFrom(msgSender, address(this), _amount);
+
+        //ISuperfluidToken(_asset).transfer(msgSender, _amountBorrowed);
+        cfaV1.createFlow(msgSender, _asset, int96(int(flowRate)));
 
         //cfaV1.createFlow(msgSender, _borrowedAsset, int96(int(borrowFlowRate)));
 

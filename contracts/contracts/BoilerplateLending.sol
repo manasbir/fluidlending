@@ -74,7 +74,7 @@ contract BoilerplateLending {
             prices[allValidTokens[i]] = priceOfToken;
         }
 
-        checkLiquidation();
+        //checkLiquidation();
     }
 
     function checkSpecificPrice(IERC20 token) public view returns(uint) {
@@ -86,14 +86,13 @@ contract BoilerplateLending {
     }
 
 
-    function checkLiquidation() public view returns(bool isLiquidatable, address owner, uint loanNumber){
-        for (uint i; i < loans.length; i++){
-            //check if loan is liquidatable then emit even or something idk
-            if (loans[i]._borrowedAmount * prices[loans[i]._borrowed] > loans[i]._collateralAmount * collateralToPercentage[loans[i]._collateral]) {
-                isLiquidatable = true;
+    function checkLiquidation(uint _index) public view returns(bool isLiquidatable, address owner, uint loanNumber){
+        if (loans[_index]._borrowedAmount * prices[loans[_index]._borrowed] > loans[_index]._collateralAmount * collateralToPercentage[loans[_index]._collateral]) {
+            isLiquidatable = true;
 
-                return (isLiquidatable, owner, i); //now loan is liquidatable
-            }
+            return (isLiquidatable, owner, _index); //now loan is liquidatable
+        } else {
+            return (isLiquidatable = false, owner, _index);
         }
     }
 
@@ -103,6 +102,7 @@ contract BoilerplateLending {
 
     function borrow(IERC20 _asset, uint _amount, IERC20 _borrowedAsset, uint _amountBorrowed) external {
         refreshPrices();
+        address msgSender = address(msg.sender);
 
         require(_asset != _borrowedAsset, "you can't borrow the same token, silly goose");
         //require token to be applicable so we dont get useless shitcoins
@@ -127,11 +127,11 @@ contract BoilerplateLending {
         require(IERC20(_asset).balanceOf(address(this)) >= _amount);
 
         IERC20(_asset).approve(address(this), _amount);
-        IERC20(_asset).transferFrom(msg.sender, address(this), _amount);
+        IERC20(_asset).transferFrom(msgSender, address(this), _amount);
 
 
 
-        IERC20(_asset).transfer(msg.sender, _amountBorrowed);
+        IERC20(_asset).transfer(msgSender, _amountBorrowed);
         //interest adding function or whatever needs to be implemented
 
         //https://github.com/aave/protocol-v2/blob/master/contracts/protocol/lendingpool/LendingPool.sol
@@ -139,12 +139,12 @@ contract BoilerplateLending {
         loans.push(CurrentLoans(_amount, _amountBorrowed, _asset, _borrowedAsset, msg.sender)); //adds to db of current loans
         ownerToLoanNumber[msg.sender] = counterOfLoans;
         
-        (bool liquidationStatus,, uint loanNumber) = checkLiquidation(); //no gas so worth adding after every function!
+        //(bool liquidationStatus,, uint loanNumber) = checkLiquidation(); //no gas so worth adding after every function!
 
-        if (liquidationStatus == true) {
+        //if (liquidationStatus == true) {
             //liquidate the loan or emit an event to liquidate
             //liquidate(x, x, x);
-        }
+       // }
 
 
         counterOfLoans++;
@@ -175,4 +175,5 @@ contract BoilerplateLending {
 
 
     }
+
 }
