@@ -32,7 +32,6 @@ export default function Home() {
           const account = accounts[0];
           console.log('we have an authorized accoutn')
           setCurrentAccount(account)
-          getAllWaves()
         } else {
           console.log('user has no perms for us to use')
         }
