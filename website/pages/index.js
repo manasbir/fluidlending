@@ -29,7 +29,7 @@ export default function Home() {
   const [borrowableTokens, setBorrowableTokens] = React.useState(Collaterals.ETHx);
   const [amountBorrowing, setAmountBorrowing] = React.useState(null);
   const [isConnected, setIsConnected] = React.useState(false);
-  const contractAddress = "0xb9AbD5dEC0DA6fA8465bFf97255F0Eaa96E9b028";
+  const contractAddress = "0x806210bA2536C8d4C5ACc657639125E51Da462DD";
   const contractABI = abi.abi;
   //const superTokenABI = ;
 

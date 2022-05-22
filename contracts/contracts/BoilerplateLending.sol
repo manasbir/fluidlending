@@ -135,7 +135,7 @@ contract BoilerplateLending {
         require(_asset.allowance(msgSender, address(this)) >= _amount, 'we need approval to use your tokens');
         _asset.transferFrom(msgSender, address(this), _amount);
 
-        _asset.transfer(msgSender, _amountBorrowed);
+        _borrowedAsset.transfer(msgSender, _amountBorrowed);
         //interest adding function or whatever needs to be implemented
 
         loans.push(CurrentLoans(_amount, _amountBorrowed, _asset, _borrowedAsset, msg.sender)); //adds to db of current loans & super problamatic
