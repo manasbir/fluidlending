@@ -63,7 +63,7 @@ export default function Home() {
     }
   }
 
-  const provider = new ethers.providers.JsonRpcProvider('https://kovan.infura.io/v3/d3910de519284a99a56bdd039a8f057c;', );
+  const provider = new ethers.providers.JsonRpcProvider('https://kovan.infura.io/v3/d3910de519284a99a56bdd039a8f057c', );
   const signer = provider.getSigner();
 
   const ETHxABI = new ethers.Contract(
@@ -978,10 +978,11 @@ export default function Home() {
   const borrow = async () => {
     const provider = new ethers.providers.JsonRpcProvider('https://kovan.infura.io/v3/d3910de519284a99a56bdd039a8f057c');
     const signer = provider.getSigner();
+    //console.log(await signer.getAddress());
 
     const boilerplateLendingContract = new ethers.Contract(contractAddress, contractABI, signer);
     
-    await TUSDxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
+    await TUSDxABI.connect(signer).approve(contractAddress, 1 /* BigInt(collateralAmount * 1000000000000000000) */);
 
 /*     if (collateral == '0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1') {
         await ETHxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
