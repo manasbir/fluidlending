@@ -64,7 +64,10 @@ export default function Home() {
     await borrow.wait()
     console.log('Mined -- ', waveTxn.hash)
   }
-  console.error("logging")
+
+  React.useEffect(() => {
+    checkIfWalletIsThere()
+  }, []);
 
   return (
     <div style={{
@@ -83,7 +86,7 @@ export default function Home() {
         display: 'flex',
         justifyContent: 'flex-end',
         padding: 10
-      }}> <Button style={{ height: 40 }} onClick={checkIfWalletIsThere}>Check if Wallet is there</Button> <Button style={{ height: 40 }} onClick={connectWallet}>Connect Wallet</Button></div>
+      }}> <Button style={{ height: 40 }} onClick={connectWallet}>Connect Wallet</Button></div>
 
       <div style={{
         display: 'flex',
