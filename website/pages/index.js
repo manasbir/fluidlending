@@ -57,7 +57,6 @@ export default function Home() {
     const signer = provider.getSigner()
     const boilerplateLendingContract = new ethers.Contract(contractAddress, contractABI, signer);
 
-    console.log('what msg?', message)
     const borrow = await boilerplateLendingContract.borrow(collateral, collateralAmount, borrowableTokens, amountBorrowing /* { gasLimit: 300000 } */)
 
     console.log('mining....', borrow.hash)
