@@ -23,7 +23,7 @@ export default function Home() {
   const [borrowableTokens, setBorrowableTokens] = React.useState(Collaterals.ETHx);
   const [amountBorrowing, setAmountBorrowing] = React.useState(null);
   const [isConnected, setIsConnected] = React.useState(false);
-  const contractAddress = "0x2e3DD88C9573F20a96072d057605F06576137303";
+  const contractAddress = "0xb9AbD5dEC0DA6fA8465bFf97255F0Eaa96E9b028";
   const contractABI = abi.abi;
   //const superTokenABI = ;
 
@@ -37,6 +37,7 @@ export default function Home() {
 
     const accounts = await ethereum.request({ method: 'eth_accounts' });
     console.log(accounts)
+
     if (accounts.length !== 0) {
       const account = accounts[0];
       console.log('we have an authorized accoutn')
@@ -45,8 +46,6 @@ export default function Home() {
       console.log('user has no perms for us to use')
     }
   }
-
-
 
   const connectWallet = async () => {
     const { ethereum } = window;
@@ -64,7 +63,7 @@ export default function Home() {
     }
   }
 
-  const provider = new ethers.providers.Web3Provider(ethereum);
+  const provider = new ethers.providers.JsonRpcProvider('https://kovan.infura.io/v3/d3910de519284a99a56bdd039a8f057c;', );
   const signer = provider.getSigner();
 
   const ETHxABI = new ethers.Contract(
@@ -977,14 +976,24 @@ export default function Home() {
 
 
   const borrow = async () => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const provider = new ethers.providers.JsonRpcProvider('https://kovan.infura.io/v3/d3910de519284a99a56bdd039a8f057c');
     const signer = provider.getSigner();
 
     const boilerplateLendingContract = new ethers.Contract(contractAddress, contractABI, signer);
     
     await TUSDxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
 
-    await boilerplateLendingContract.borrow(collateral, BigInt(collateralAmount * 1000000000000000000), borrowableTokens, BigInt(amountBorrowing * 1000000000000000000), { gasLimit: 300000 });
+/*     if (collateral == '0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1') {
+        await ETHxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
+    } else if (collateral == '0xe3CB950Cb164a31C66e32c320A800D477019DCFF') {
+        await DAIxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
+    } else if (collateral == '0x25B5cD2E6ebAedAa5E21d0ECF25A567EE9704aA7') {
+        await USDCxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
+    } else if (collateral == '0xB20200908d60f1d7bc68594f677bC15070a87504') {
+        await TUSDxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
+    } */
+
+    //await boilerplateLendingContract.borrow(collateral, BigInt(collateralAmount * 1000000000000000000), borrowableTokens, BigInt(amountBorrowing * 1000000000000000000), { gasLimit: 300000 });
   }
 
   React.useEffect(() => {
@@ -1001,7 +1010,7 @@ export default function Home() {
         <h1 style={{
           width: '100%',
           textAlign: 'center'
-        }}>Hack Money</h1>
+        }}>Fluid Lending</h1>
       </div>
 
       <div style={{
