@@ -1,5 +1,5 @@
-const { setWeb3Provider } = require('./src/config/web3');
-const { setSingletonsConfig } = require('./src/config/singletons');
+const { setWeb3Provider } = require('@openzeppelin/test-helpers/src/config/web3');
+const { setSingletonsConfig } = require('@openzeppelin/test-helpers/src/config/singletons');
 
 const { deprecate } = require('util');
 

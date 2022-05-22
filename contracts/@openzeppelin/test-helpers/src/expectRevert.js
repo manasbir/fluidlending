@@ -1,4 +1,4 @@
-const { web3 } = require('./setup');
+const { web3 } = require('@openzeppelin/test-helpers/src/setup');
 const { expect } = require('chai');
 
 const colors = require('ansi-colors');

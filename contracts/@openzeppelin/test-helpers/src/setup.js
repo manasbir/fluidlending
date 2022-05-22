@@ -1,6 +1,6 @@
-require('../configure')();
+require('@openzeppelin/test-helpers/configure')();
 
-const web3 = require('./config/web3').getWeb3();
+const web3 = require('@openzeppelin/test-helpers/src/config/web3').getWeb3();
 
 const BN = web3.utils.BN;
 const chaiBN = require('chai-bn')(BN);

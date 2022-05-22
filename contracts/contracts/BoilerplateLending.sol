@@ -2,10 +2,19 @@
 pragma solidity ^0.8.0;
 import "../@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-
+import { ISuperfluid, ISuperToken, ISuperApp, ISuperAgreement, ContextDefinitions, SuperAppDefinitions } from "../@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { IConstantFlowAgreementV1 } from "../@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
+import { CFAv1Library } from "../@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
+import { ISuperfluidToken } from "../@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluidToken.sol";
+import { ISuperApp } from "../@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperApp.sol";
 
 //standard aave-esque lending
 contract BoilerplateLending {
+
+    using CFAv1Library for CFAv1Library.InitData;
+
+    //initialize cfaV1 variable
+    CFAv1Library.InitData public cfaV1;
 
     AggregatorV3Interface public priceFeed;
     AggregatorV3Interface ETHprice;
@@ -18,27 +27,27 @@ contract BoilerplateLending {
 
 
 
-    mapping (IERC20 => uint) collateralToPercentage;//doesnt need to exist
+    mapping (ISuperToken => uint) collateralToPercentage;//doesnt need to exist
     //uint example would be 1 for 100% ideally idk figure it out later
-    mapping (IERC20 => uint) borrowedAssetToPercentage; //only exists to know valid token lmfao
+    mapping (ISuperToken => uint) borrowedAssetToPercentage; //only exists to know valid token lmfao
     //some sort of storage for what is valid collateral
-    mapping (address => TokenPrice) public tokenToStruct;
+    mapping (ISuperToken => TokenPrice) public tokenToStruct;
 
-    mapping (IERC20 => AggregatorV3Interface) tokenToOracle;
+    mapping (ISuperToken => AggregatorV3Interface) tokenToOracle;
 
-    mapping (IERC20 => uint) prices;
+    mapping (ISuperToken => uint) prices;
 
     
 
-    IERC20[] public collateral;
-    IERC20[] public borrowableTokens;
-    IERC20[] public allValidTokens;
+    ISuperToken[] public collateral;
+    ISuperToken[] public borrowableTokens;
+    ISuperToken[] public allValidTokens;
 
     struct CurrentLoans {
         uint _collateralAmount;
         uint _borrowedAmount;
-        IERC20 _collateral; //i want this to be an array but dont really know how
-        IERC20 _borrowed; // i want this to be an array also
+        ISuperToken _collateral; //i want this to be an array but dont really know how
+        ISuperToken _borrowed; // i want this to be an array also
         address _owner;
     }
 
@@ -58,10 +67,10 @@ contract BoilerplateLending {
         USDCprice = AggregatorV3Interface(0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60);
         TUSDprice = AggregatorV3Interface(0x2ca5A90D34cA333661083F89D831f757A9A50148); //USDT oracle address for Koven testnet - didn't have TUSD/USD pair
 
-        tokenToStruct[0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1] = TokenPrice(0x9326BFA02ADD2366b30bacB125260Af641031331, 0); //this is a bullshit token i got from a faucet lmao
-        tokenToStruct[0xe3CB950Cb164a31C66e32c320A800D477019DCFF] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0);
-        tokenToStruct[0x25B5cD2E6ebAedAa5E21d0ECF25A567EE9704aA7] = TokenPrice(0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60, 0);
-        tokenToStruct[0xB20200908d60f1d7bc68594f677bC15070a87504] = TokenPrice(0x2ca5A90D34cA333661083F89D831f757A9A50148, 0);
+        tokenToStruct[ISuperToken(0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1)] = TokenPrice(0x9326BFA02ADD2366b30bacB125260Af641031331, 0); //this is a bullshit token i got from a faucet lmao
+        tokenToStruct[ISuperToken(0xe3CB950Cb164a31C66e32c320A800D477019DCFF)] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0);
+        tokenToStruct[ISuperToken(0x25B5cD2E6ebAedAa5E21d0ECF25A567EE9704aA7)] = TokenPrice(0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60, 0);
+        tokenToStruct[ISuperToken(0xB20200908d60f1d7bc68594f677bC15070a87504)] = TokenPrice(0x2ca5A90D34cA333661083F89D831f757A9A50148, 0);
     }
 
     function refreshPrices() public {
@@ -77,7 +86,7 @@ contract BoilerplateLending {
         //checkLiquidation();
     }
 
-    function checkSpecificPrice(IERC20 token) public view returns(uint) {
+    function checkSpecificPrice(ISuperToken token) public view returns(uint) {
         AggregatorV3Interface priceOracle = tokenToOracle[token];
         (,int price,,,) = priceOracle.latestRoundData();
         uint8 decimals = priceOracle.decimals();
@@ -96,11 +105,16 @@ contract BoilerplateLending {
         }
     }
 
-    function liquidate(uint loanNumber, uint _amount, IERC20 token) external returns(bool) {
+    function liquidate(uint _loanNumber) external returns(bool) {
+        (bool canLiquidate,,) = checkLiquidation(_loanNumber);
+        require(canLiquidate == true);
+        uint liquidatationAmount = loans[_loanNumber]._borrowedAmount * 100 / 105;
+        require(loans[_loanNumber]._borrowed.balanceOf(msg.sender) >= liquidatationAmount);
+
 
     }
 
-    function borrow(IERC20 _asset, uint _amount, IERC20 _borrowedAsset, uint _amountBorrowed) external {
+    function borrow(ISuperToken _asset, uint _amount, ISuperToken _borrowedAsset, uint _amountBorrowed) external {
         refreshPrices();
         address msgSender = address(msg.sender);
 
@@ -124,14 +138,14 @@ contract BoilerplateLending {
 
         //checking if the loan is even possible
         require(worthOfBorrowed >= worthOfCollateral * borrowRatio);
-        require(IERC20(_asset).balanceOf(address(this)) >= _amount);
+        require(_asset.balanceOf(address(this)) >= _amount);
 
-        IERC20(_asset).approve(address(this), _amount);
-        IERC20(_asset).transferFrom(msgSender, address(this), _amount);
+        //ISupertoken(_asset).approve(address(this), _amount);
+        require(_asset.allowance(msgSender, address(this)) >= _amount, 'we need approval to use your tokens');
+        _asset.transferFrom(msgSender, address(this), _amount);
 
 
-
-        IERC20(_asset).transfer(msgSender, _amountBorrowed);
+        _asset.transfer(msgSender, _amountBorrowed);
         //interest adding function or whatever needs to be implemented
 
         //https://github.com/aave/protocol-v2/blob/master/contracts/protocol/lendingpool/LendingPool.sol
@@ -150,7 +164,8 @@ contract BoilerplateLending {
         counterOfLoans++;
     }
 
-    function fund(IERC20 _asset, uint _amount) external {
+    function fund(ISuperToken _asset, uint _amount) external {
+        msgSender = msg.sender
         refreshPrices();
 
         require(prices[_asset] != 0);
@@ -162,18 +177,20 @@ contract BoilerplateLending {
         require(loans[indexForLoan]._collateral == _asset);
         require(_asset.balanceOf(msg.sender) >= _amount);
 
-        _asset.approve(address(this), _amount);
-        _asset.transferFrom(msg.sender, address(this), _amount);
+        //_asset.approve(address(this), _amount);
+        require(_asset.allowance(msgSender, address(this)) >= _amount, 'we need approval to use your tokens');
+        _asset.transferFrom(msgSender, address(this), _amount);
 
         loans[indexForLoan]._collateralAmount += _amount;
-
-
     }
 
     function takeOutCollateral() external {
         refreshPrices();
-
-
+        uint _index = ownerToLoanNumber[msg.sender];
+        require(loans[_index]._borrowed.balanceOf(msg.sender) >= loans[_index]._borrowedAmount && loans[_index]._collateral.balanceOf(msg.sender) >= loans[_index]._collateralAmount);
+        require(_asset.allowance(msgSender, address(this)) >= //_amount, 'we need approval to use your tokens');
+        loans[_index]._borrowed.transferFrom(msg.sender, address(this), loans[_index]._borrowedAmount);
+        loans[_index]._collateral.transfer(msg.sender, loans[_index]._collateralAmount);
     }
 
 }
