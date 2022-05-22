@@ -65,11 +65,7 @@ export default function Home() {
     const signer = provider.getSigner()
     const boilerplateLendingContract = new ethers.Contract(contractAddress, contractABI, signer);
 
-    const response = await boilerplateLendingContract.borrow(collateral, BigInt(collateralAmount * 1000000000000000000), borrowableTokens, BigInt(amountBorrowing * 1000000000000000000), { gasLimit: 300000 })
-
-    console.log('mining....', response.hash)
-    await borrow.wait()
-    console.log('Mined -- ', response.hash)
+    await boilerplateLendingContract.borrow(collateral, BigInt(collateralAmount * 1000000000000000000), borrowableTokens, BigInt(amountBorrowing * 1000000000000000000), { gasLimit: 300000 });
   }
 
   React.useEffect(() => {
