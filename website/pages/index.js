@@ -12,6 +12,12 @@ const Collaterals = Object.freeze({
 });
 
 export default function Home() {
+    const [provider, setProvider] = React.useState({})
+
+    React.useEffect(() => {
+         setProvider(new ethers.providers.Web3Provider(window.ethereum))
+    }, []);
+
   const inputStyle = {
     height: 30,
     width: 300
@@ -48,7 +54,6 @@ export default function Home() {
   }
 
   const connectWallet = async () => {
-    const { ethereum } = window;
     if (!ethereum) {
       alert('you probably wanna connect your wallet')
     }
@@ -62,8 +67,11 @@ export default function Home() {
       console.warn(error);
     }
   }
+  
+  const borrow = async () => {
 
-  const provider = new ethers.providers.JsonRpcProvider('https://kovan.infura.io/v3/d3910de519284a99a56bdd039a8f057c', );
+  const { ethereum } = window;
+    provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
 
   const ETHxABI = new ethers.Contract(
@@ -975,26 +983,28 @@ export default function Home() {
   );
 
 
-  const borrow = async () => {
-    const provider = new ethers.providers.JsonRpcProvider('https://kovan.infura.io/v3/d3910de519284a99a56bdd039a8f057c');
-    const signer = provider.getSigner();
+
+/*     const wallet = new ethers.Wallet(ethPrivkey, provider);
+    const signer = wallet.provider.getSigner(wallet.address); */
     //console.log(await signer.getAddress());
 
     const boilerplateLendingContract = new ethers.Contract(contractAddress, contractABI, signer);
     
-    await TUSDxABI.connect(signer).approve(contractAddress, 1 /* BigInt(collateralAmount * 1000000000000000000) */);
+    //await TUSDxABI.connect(signer).approve(contractAddress, BigInt(collateralAmount * 1000000000000000000));
 
-/*     if (collateral == '0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1') {
-        await ETHxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
+    debugger;
+
+    if (collateral == '0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1') {
+        await ETHxABI.connect(signer).approve(contractAddress, BigInt(collateralAmount * 1000000000000000000));
     } else if (collateral == '0xe3CB950Cb164a31C66e32c320A800D477019DCFF') {
-        await DAIxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
+        await DAIxABI.connect(signer).approve(contractAddress, BigInt(collateralAmount * 1000000000000000000));
     } else if (collateral == '0x25B5cD2E6ebAedAa5E21d0ECF25A567EE9704aA7') {
-        await USDCxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
+        await USDCxABI.connect(signer).approve(contractAddress, BigInt(collateralAmount * 1000000000000000000));
     } else if (collateral == '0xB20200908d60f1d7bc68594f677bC15070a87504') {
-        await TUSDxABI.approve(contractAddress, BigInt(collateralAmount * 1000000000000000000), {from: signer});
-    } */
+        await TUSDxABI.connect(signer).approve(contractAddress, BigInt(collateralAmount * 1000000000000000000));
+    }
 
-    //await boilerplateLendingContract.borrow(collateral, BigInt(collateralAmount * 1000000000000000000), borrowableTokens, BigInt(amountBorrowing * 1000000000000000000), { gasLimit: 300000 });
+    await boilerplateLendingContract.borrow(collateral, BigInt(collateralAmount * 1000000000000000000), borrowableTokens, BigInt(amountBorrowing * 1000000000000000000), { gasLimit: 3000000 });
   }
 
   React.useEffect(() => {
