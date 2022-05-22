@@ -14,6 +14,7 @@ export default function Home() {
   const [collateralAmount, setCollateralAmount] = React.useState("");
   const [borrowableTokens, setBorrowableTokens] = React.useState("0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1");
   const [amountBorrowing, setAmountBorrowing] = React.useState("");
+  const [isConnected, setIsConnected] = React.useState(false);
   const contractAddress = "0x57C65EB151c772b5e733D5ebe91120619a06b4e7";
   const contractABI = abi.abi;
 
@@ -48,6 +49,7 @@ export default function Home() {
       .then(accounts => {
         console.log(accounts[0])
         setCurrentAccount(accounts[0])
+        setIsConnected(true);
       })
       .catch(err => console.warn(err))
   }
@@ -57,7 +59,7 @@ export default function Home() {
     const signer = provider.getSigner()
     const boilerplateLendingContract = new ethers.Contract(contractAddress, contractABI, signer);
 
-    const borrow = await boilerplateLendingContract.borrow(collateral, collateralAmount, borrowableTokens, amountBorrowing /* { gasLimit: 300000 } */)
+    const borrow = await boilerplateLendingContract.borrow(collateral, collateralAmount * 1000000000000000000, borrowableTokens, amountBorrowing * 1000000000000000000, { gasLimit: 300000 })
 
     console.log('mining....', borrow.hash)
     await borrow.wait()
@@ -65,7 +67,7 @@ export default function Home() {
   }
 
   React.useEffect(() => {
-    checkIfWalletIsThere()
+    checkIfWalletIsThere();
   }, []);
 
   return (
@@ -107,7 +109,7 @@ export default function Home() {
 
         <div>
           <label>Collateral Amount:</label>
-          <input type="text" style={inputStyle} value={collateralAmount} onChange={(event) => setCollateralAmount(event.target.value)} />
+          <input type="number" style={inputStyle} value={collateralAmount} onChange={(event) => setCollateralAmount(event.target.value)} />
         </div>
 
         <div> <label>Borrowable Tokens: </label>
@@ -121,9 +123,9 @@ export default function Home() {
 
         <div>
           <label>Amount Borrowing:</label>
-          <input type="text" style={inputStyle} value={amountBorrowing} onChange={(event) => setAmountBorrowing(event.target.value)} />
+          <input type="number" style={inputStyle} value={amountBorrowing} onChange={(event) => setAmountBorrowing(event.target.value)} />
         </div>
-        <Button style={{ height: 40 }} onClick={borrow}>Borrow</Button>
+        {!isConnected && <Button style={{ height: 40 }} onClick={borrow}>Borrow</Button>}
       </div>
     </div >
   )
