@@ -16,13 +16,18 @@ contract BoilerplateLending {
     //initialize cfaV1 variable
     CFAv1Library.InitData public cfaV1;
 
-    AggregatorV3Interface public priceFeed;
+
     AggregatorV3Interface ETHprice;
     AggregatorV3Interface DAIprice;
     AggregatorV3Interface USDCprice;
     AggregatorV3Interface TUSDprice;
 
-    struct TokenPrice{ address AggregatorV3Interface; uint price; }
+    ISuperToken ETHx;
+    ISuperToken DAIx;
+    ISuperToken USDCx;
+    ISuperToken TUSDx;
+
+    struct TokenPrice{ AggregatorV3Interface oracle; uint price; }
     TokenPrice[] tokenPrices;
 
 
@@ -60,17 +65,24 @@ contract BoilerplateLending {
     uint counterOfLoans = 0;
 
     constructor () {
-        address owner = msg.sender;
+        //address owner = msg.sender;
+
         //all the kovan addresses
+        //kovan testnet addresses for tokens
         ETHprice = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
         DAIprice = AggregatorV3Interface(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a);
         USDCprice = AggregatorV3Interface(0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60);
         TUSDprice = AggregatorV3Interface(0x2ca5A90D34cA333661083F89D831f757A9A50148); //USDT oracle address for Koven testnet - didn't have TUSD/USD pair
 
-        tokenToStruct[ISuperToken(0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1)] = TokenPrice(0x9326BFA02ADD2366b30bacB125260Af641031331, 0); //this is a bullshit token i got from a faucet lmao
-        tokenToStruct[ISuperToken(0xe3CB950Cb164a31C66e32c320A800D477019DCFF)] = TokenPrice(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a, 0);
-        tokenToStruct[ISuperToken(0x25B5cD2E6ebAedAa5E21d0ECF25A567EE9704aA7)] = TokenPrice(0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60, 0);
-        tokenToStruct[ISuperToken(0xB20200908d60f1d7bc68594f677bC15070a87504)] = TokenPrice(0x2ca5A90D34cA333661083F89D831f757A9A50148, 0);
+        ETHx = ISuperToken(0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1);
+        DAIx = ISuperToken(0xe3CB950Cb164a31C66e32c320A800D477019DCFF);
+        USDCx = ISuperToken(0x25B5cD2E6ebAedAa5E21d0ECF25A567EE9704aA7);
+        TUSDx = ISuperToken(0xB20200908d60f1d7bc68594f677bC15070a87504);
+
+        borrowedAssetToPercentage[ETHx] = 110;
+        borrowedAssetToPercentage[DAIx] = 110;
+        borrowedAssetToPercentage[USDCx] = 110;
+        borrowedAssetToPercentage[TUSDx] = 110;
     }
 
     function refreshPrices() public {
@@ -96,7 +108,7 @@ contract BoilerplateLending {
 
 
     function checkLiquidation(uint _index) public view returns(bool isLiquidatable, address owner, uint loanNumber){
-        if (loans[_index]._borrowedAmount * prices[loans[_index]._borrowed] > loans[_index]._collateralAmount * collateralToPercentage[loans[_index]._collateral]) {
+        if (loans[_index]._borrowedAmount * prices[loans[_index]._borrowed] > loans[_index]._collateralAmount * (borrowedAssetToPercentage[loans[_index]._borrowed] / 100)) {
             isLiquidatable = true;
 
             return (isLiquidatable, owner, _index); //now loan is liquidatable
@@ -106,15 +118,18 @@ contract BoilerplateLending {
     }
 
     function liquidate(uint _loanNumber) external returns(bool) {
+        address msgSender = msg.sender;
         (bool canLiquidate,,) = checkLiquidation(_loanNumber);
         require(canLiquidate == true);
-        uint liquidatationAmount = loans[_loanNumber]._borrowedAmount * 100 / 105;
-        require(loans[_loanNumber]._borrowed.balanceOf(msg.sender) >= liquidatationAmount);
-
+        uint liquidationAmount = loans[_loanNumber]._borrowedAmount * 100 / 105;
+        require(loans[_loanNumber]._borrowed.balanceOf(msgSender) >= liquidationAmount);
+        require(loans[_loanNumber]._borrowed.allowance(msgSender, address(this)) >= liquidationAmount);
+        loans[_loanNumber]._borrowed.transferFrom(msgSender, address(this), liquidationAmount);
+        return true;
 
     }
 
-    function borrow(ISuperToken _asset, uint _amount, ISuperToken _borrowedAsset, uint _amountBorrowed) external {
+    function borrow(ISuperToken _asset, uint _amount, ISuperToken _borrowedAsset, uint _amountBorrowed) public {
         refreshPrices();
         address msgSender = address(msg.sender);
 
@@ -130,27 +145,19 @@ contract BoilerplateLending {
 
         uint worthOfCollateral = priceOfAsset * _amount;
         uint worthOfBorrowed = priceOfBorrowedAsset * _amountBorrowed;
-        //uint collateralRatio = collateralToPercentage[_collateralToken] * 100; // x100 for percentage
-
-        //might not be necessary
-        uint borrowRatio = (borrowedAssetToPercentage[_borrowedAsset]);
-
 
         //checking if the loan is even possible
-        require(worthOfBorrowed >= worthOfCollateral * borrowRatio);
+        require(worthOfBorrowed >= worthOfCollateral * borrowedAssetToPercentage[_borrowedAsset] / 100);
         require(_asset.balanceOf(address(this)) >= _amount);
 
         //ISupertoken(_asset).approve(address(this), _amount);
         require(_asset.allowance(msgSender, address(this)) >= _amount, 'we need approval to use your tokens');
         _asset.transferFrom(msgSender, address(this), _amount);
 
-
         _asset.transfer(msgSender, _amountBorrowed);
         //interest adding function or whatever needs to be implemented
 
-        //https://github.com/aave/protocol-v2/blob/master/contracts/protocol/lendingpool/LendingPool.sol
-        //use ctrl + F _executeBorrow
-        loans.push(CurrentLoans(_amount, _amountBorrowed, _asset, _borrowedAsset, msg.sender)); //adds to db of current loans
+        loans.push(CurrentLoans(_amount, _amountBorrowed, _asset, _borrowedAsset, msg.sender)); //adds to db of current loans & super problamatic
         ownerToLoanNumber[msg.sender] = counterOfLoans;
         
         //(bool liquidationStatus,, uint loanNumber) = checkLiquidation(); //no gas so worth adding after every function!
@@ -165,12 +172,10 @@ contract BoilerplateLending {
     }
 
     function fund(ISuperToken _asset, uint _amount) external {
-        msgSender = msg.sender
+        address msgSender = msg.sender;
         refreshPrices();
 
         require(prices[_asset] != 0);
-
-        uint priceOfAsset = checkSpecificPrice(_asset); //might not be relevant
 
         uint indexForLoan = ownerToLoanNumber[msg.sender];
 
@@ -185,12 +190,13 @@ contract BoilerplateLending {
     }
 
     function takeOutCollateral() external {
+        address msgSender = msg.sender;
         refreshPrices();
         uint _index = ownerToLoanNumber[msg.sender];
         require(loans[_index]._borrowed.balanceOf(msg.sender) >= loans[_index]._borrowedAmount && loans[_index]._collateral.balanceOf(msg.sender) >= loans[_index]._collateralAmount);
-        require(_asset.allowance(msgSender, address(this)) >= //_amount, 'we need approval to use your tokens');
-        loans[_index]._borrowed.transferFrom(msg.sender, address(this), loans[_index]._borrowedAmount);
-        loans[_index]._collateral.transfer(msg.sender, loans[_index]._collateralAmount);
+        require(loans[_index]._borrowed.allowance(msgSender, address(this)) >= loans[_index]._borrowedAmount, 'we need approval to use your tokens');
+        loans[_index]._borrowed.transferFrom(msgSender, address(this), loans[_index]._borrowedAmount);
+        loans[_index]._collateral.transfer(msgSender, loans[_index]._collateralAmount);
     }
 
 }
