@@ -28,8 +28,6 @@ contract BoilerplateLending {
 
     mapping (ISuperToken => AggregatorV3Interface) tokenToOracle;
 
-    mapping (ISuperToken => uint) prices;
-
     
 
     ISuperToken[] private collateral;
@@ -117,7 +115,7 @@ contract BoilerplateLending {
 
         require(_asset != _borrowedAsset, "you can't borrow the same token, silly goose");
         //require token to be applicable so we dont get useless shitcoins
-        require(prices[_asset] != 0 && prices[_borrowedAsset] != 0, 'not valid tokens');
+        require(tokenToOracle[_asset] != 0x0 && tokenToOracle[_borrowedAsset] != 0x0, 'not valid tokens');
         
         require(_asset.balanceOf(address(msg.sender)) >= _amount, "you dont have enough tokens");
         require(_borrowedAsset.balanceOf(address(this)) >= _amountBorrowed, "we dont have enough of that token");
