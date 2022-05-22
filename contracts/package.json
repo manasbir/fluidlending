@@ -3,7 +3,8 @@
   "dependencies": {
     "@chainlink/contracts": "^0.4.1",
     "@openzeppelin/contracts": "^4.6.0",
-    "@superfluid-finance/ethereum-contracts": "^1.2.2"
+    "@superfluid-finance/ethereum-contracts": "^1.2.2",
+    "dotenv": "^16.0.1"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-waffle": "^2.0.3",
