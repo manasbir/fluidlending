@@ -85,7 +85,6 @@ contract BoilerplateLending {
         return (uint(price) / (10 ** uint256(decimals)));
     }
 
-
     function checkLiquidation(uint _index) public view returns(bool isLiquidatable){
         if (loans[_index]._borrowedAmount * prices[loans[_index]._borrowed] > loans[_index]._collateralAmount * (borrowedAssetToPercentage[loans[_index]._borrowed] / 100)) {
             isLiquidatable = true;
