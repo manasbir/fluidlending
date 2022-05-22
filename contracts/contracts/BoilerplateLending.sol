@@ -84,7 +84,9 @@ contract BoilerplateLending {
     }
 
     function checkLiquidation(uint _index) public view returns(bool isLiquidatable){
-        if (loans[_index]._borrowedAmount * prices[loans[_index]._borrowed] > loans[_index]._collateralAmount * (borrowedAssetToPercentage[loans[_index]._borrowed] / 100)) {
+        uint specificPrice = checkSpecificPrice(loans[_index]._borrowed);
+        uint otherPrice = checkSpecificPrice(loans[_index]._borrowed);
+        if (loans[_index]._borrowedAmount * specificPrice > otherPrice * loans[_index]._collateralAmount * (borrowedAssetToPercentage[loans[_index]._borrowed] / 100)) {
             isLiquidatable = true;
 
             return isLiquidatable; //now loan is liquidatable
@@ -115,7 +117,7 @@ contract BoilerplateLending {
 
         require(_asset != _borrowedAsset, "you can't borrow the same token, silly goose");
         //require token to be applicable so we dont get useless shitcoins
-        require(tokenToOracle[_asset] != 0x0 && tokenToOracle[_borrowedAsset] != 0x0, 'not valid tokens');
+        require(borrowedAssetToPercentage[_asset] != 0 && borrowedAssetToPercentage[_borrowedAsset] != 0, 'not valid tokens');
         
         require(_asset.balanceOf(address(msg.sender)) >= _amount, "you dont have enough tokens");
         require(_borrowedAsset.balanceOf(address(this)) >= _amountBorrowed, "we dont have enough of that token");
@@ -127,7 +129,7 @@ contract BoilerplateLending {
         uint worthOfBorrowed = priceOfBorrowedAsset * _amountBorrowed;
 
         //checking if the loan is even possible
-        require(worthOfBorrowed * borrowedAssetToPercentage[_borrowedAsset] / 100 >= worthOfCollateral, "you should add more collateral");
+        require(worthOfCollateral >= worthOfBorrowed * (borrowedAssetToPercentage[_borrowedAsset] / 100) , "you should add more collateral");
 
         //ISupertoken(_asset).approve(address(this), _amount);
         require(_asset.allowance(msgSender, address(this)) >= _amount, 'we need approval to use your tokens');
