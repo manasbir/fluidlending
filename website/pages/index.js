@@ -12,7 +12,7 @@ export default function Home() {
   const [currAccount, setCurrentAccount] = React.useState("");
   const [collateral, setCollateral] = React.useState("0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1");
   const [collateralAmount, setCollateralAmount] = React.useState("");
-  const [borrowableTokens, setBorrowableTokens] = React.useState("");
+  const [borrowableTokens, setBorrowableTokens] = React.useState("0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1");
   const [amountBorrowing, setAmountBorrowing] = React.useState("");
   const contractAddress = "0x57C65EB151c772b5e733D5ebe91120619a06b4e7";
   const contractABI = abi.abi;
@@ -60,9 +60,9 @@ export default function Home() {
     console.log('what msg?', message)
     const borrow = await boilerplateLendingContract.borrow(collateral, collateralAmount, borrowableTokens, amountBorrowing /* { gasLimit: 300000 } */)
 
-    console.log('mining....', waveTxn.hash)
+    console.log('mining....', borrow.hash)
     await borrow.wait()
-    console.log('Mined -- ', waveTxn.hash)
+    console.log('Mined -- ', borrow.hash)
   }
 
   React.useEffect(() => {
@@ -96,7 +96,8 @@ export default function Home() {
         justifyContent: 'center',
         gap: 5
       }} >
-        <div> <label>Collateral: </label>
+        <div>
+          <label>Collateral: </label>
           <select value={collateral} onChange={(x) => setCollateral(x.target.value)}>
             <option value="0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1">ETHx</option>
             <option value="0xe3CB950Cb164a31C66e32c320A800D477019DCFF">DAIx</option>
@@ -105,9 +106,24 @@ export default function Home() {
           </select>
         </div>
 
-        <div> <label>Collateral Amount:</label> <input type="text" style={inputStyle} value={collateralAmount} onChange={(event) => setCollateralAmount(event.target.value)} /></div>
-        <div> <label>Borrowable Tokens:</label> <input type="text" style={inputStyle} value={borrowableTokens} onChange={(event) => setBorrowableTokens(event.target.value)} /></div>
-        <div> <label>Amount Borrowing:</label> <input type="text" style={inputStyle} value={amountBorrowing} onChange={(event) => setAmountBorrowing(event.target.value)} /></div>
+        <div>
+          <label>Collateral Amount:</label>
+          <input type="text" style={inputStyle} value={collateralAmount} onChange={(event) => setCollateralAmount(event.target.value)} />
+        </div>
+
+        <div> <label>Borrowable Tokens: </label>
+          <select value={borrowableTokens} onChange={(x) => setBorrowableTokens(x.target.value)}>
+            <option value="0xDD5462a7dB7856C9128Bc77Bd65c2919Ee23C6E1">ETHx</option>
+            <option value="0xe3CB950Cb164a31C66e32c320A800D477019DCFF">DAIx</option>
+            <option value="0x25B5cD2E6ebAedAa5E21d0ECF25A567EE9704aA7">USDCx</option>
+            <option value="0xB20200908d60f1d7bc68594f677bC15070a87504">TUSDx</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Amount Borrowing:</label>
+          <input type="text" style={inputStyle} value={amountBorrowing} onChange={(event) => setAmountBorrowing(event.target.value)} />
+        </div>
         <Button style={{ height: 40 }} onClick={borrow}>Borrow</Button>
       </div>
     </div >
